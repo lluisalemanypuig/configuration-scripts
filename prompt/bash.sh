@@ -51,9 +51,8 @@ prompt_command() {
 	git_info=$(git_prompt)
 
 	local cols=$(tput cols)
-	local right=$(date '+%H:%M:%S %a %-d %b %Y')
 
-	local date_text=$(date '+%H:%M:%S %a %Y')
+	local date_text=$(date '+%H:%M:%S %d %a %Y')
 
 	local PROMPT1A="${BOLDGREEN}\u${RESET} ${CYAN}\w${RESET}"
 	if [[ -n "$git_info" ]]; then
@@ -65,7 +64,7 @@ prompt_command() {
 
 	local PROMPT1=$(
 		printf '%s' "$PROMPT1A"
-		printf '\e[%dG%s\n' "$((cols - 17 + 1))" "$PROMPT1C"
+		printf '\e[%dG%s\n' "$((cols - 20 + 1))" "$PROMPT1C"
 	)
 
 	local PROMPT2="${WHITE}➜ ${RESET}"
