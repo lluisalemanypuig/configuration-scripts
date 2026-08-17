@@ -3,6 +3,7 @@
 set -ex
 
 branch=$1
+main_branch=${2:-dev}
 
 if [ -z $branch ]; then
 	echo "Branch name not provided"
@@ -21,7 +22,7 @@ if [ "$branch" == "$current_branch" ]; then
 	exit
 fi
 
-git checkout dev
-git fetch origin $branch
-git checkout $branch
+git checkout "$main_branch"
+git fetch origin "$branch"
+git checkout "$branch"
 git pull
