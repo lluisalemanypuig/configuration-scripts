@@ -18,8 +18,8 @@ fi
 
 if [[ "$from_branch" == "$current_branch" ]]; then
 	echo "Cannot rebase a branch onto itself"
-	echo "from_branch:    $from_branch"
-	echo "current_branch: $current_branch"
+	echo "from_branch:    '$from_branch'"
+	echo "current_branch: '$current_branch'"
 	exit
 fi
 
@@ -27,11 +27,11 @@ fi
 git pull
 
 # update from_branch
-git checkout $from_branch
+git checkout "$from_branch"
 
 git pull
 
 # rebase from_branch into current_branch
-git checkout $current_branch
-echo "Rebasing $from_branch into $current_branch"
-git rebase $from_branch
+git checkout "$current_branch"
+echo "Rebasing '$from_branch' into '$current_branch'"
+git rebase "$from_branch"
