@@ -3,11 +3,15 @@
 set -ex
 
 branch=$1
-main_branch=${2:-dev}
+main_branch=$2
 
-if [ -z $branch ]; then
+if [ -z "$branch" ]; then
 	echo "Branch name not provided"
-	exit
+	exit 1
+fi
+if [ -z "$main_branch" ]; then
+	echo "Main branch name not provided"
+	exit 1
 fi
 
 current_branch=$(git branch --show-current)
