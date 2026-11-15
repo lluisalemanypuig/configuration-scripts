@@ -19,29 +19,40 @@
 autoload -Uz vcs_info
 
 +vi-git-ahead-behind() {
-    local ahead behind
-    local -a gitstatus
+    # vcs_info runs this hook once per format, and only a format with %m can show the result.
+    [[ $2 == *%*m* ]] || return 0
 
-    untracked=$(git ls-files --others --exclude-standard 2>/dev/null | wc -l | tr -d ' ')
-    (( untracked > 0 )) && gitstatus+=("%F{magenta}?${untracked}%f")
+    local prefix_and_upstream prefix entry
+    local -i untracked unstaged staged is_rename_source
+    local -a gitstatus ahead_behind status_entries
 
-    if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        unstaged=$(git status --porcelain 2>/dev/null | grep -c '^.[MD]')
-        staged=$(git status --porcelain 2>/dev/null | grep -c '^[MADRC]')
+    prefix_and_upstream=$(git rev-parse --show-prefix '@{upstream}' 2>/dev/null) || return 0
+    prefix=${prefix_and_upstream%$'\n'*}
 
-        (( unstaged > 0 )) && gitstatus+=("%F{red}*${unstaged}%f")
-        (( staged > 0 ))   && gitstatus+=("%F{blue}+${staged}%f")
-    fi
+    status_entries=(${(0)"$(git status --porcelain -z --untracked-files=all 2>/dev/null)"})
 
-    if git rev-parse @{upstream} >/dev/null 2>&1; then
-        ahead=$(git rev-list @{upstream}..HEAD 2>/dev/null | wc -l | tr -d ' ')
-        behind=$(git rev-list HEAD..@{upstream} 2>/dev/null | wc -l | tr -d ' ')
+    # Untracked files are counted below the current directory only; changes to tracked files are
+    # counted across the whole repository.
+    for entry in "${status_entries[@]}"; do
+        if (( is_rename_source )); then
+            is_rename_source=0
+            continue
+        fi
+        [[ $entry == [RC]* || $entry == ?[RC]* ]] && is_rename_source=1
+        [[ $entry == "?? $prefix"* ]] && (( ++untracked ))
+        [[ $entry == ?[MD]* ]] && (( ++unstaged ))
+        [[ $entry == [MADRC]* ]] && (( ++staged ))
+    done
 
-        (( ahead > 0 ))  && gitstatus+=("%F{10}⇡${ahead}%f")
-        (( behind > 0 )) && gitstatus+=("%F{9}⇣${behind}%f")
+    ahead_behind=($(git rev-list --left-right --count 'HEAD...@{upstream}' 2>/dev/null))
 
-        hook_com[misc]="${(j: :)gitstatus}"
-    fi
+    (( untracked > 0 ))       && gitstatus+=("%F{magenta}?${untracked}%f")
+    (( unstaged > 0 ))        && gitstatus+=("%F{red}*${unstaged}%f")
+    (( staged > 0 ))          && gitstatus+=("%F{blue}+${staged}%f")
+    (( ahead_behind[1] > 0 )) && gitstatus+=("%F{10}⇡${ahead_behind[1]}%f")
+    (( ahead_behind[2] > 0 )) && gitstatus+=("%F{9}⇣${ahead_behind[2]}%f")
+
+    hook_com[misc]="${(j: :)gitstatus}"
 }
 
 local PROMPT_START="%{\e]133;A\a%}"
